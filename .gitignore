@@ -1,1 +1,7 @@
 *.class
+DumAI.class
+GameState.class
+IOthelloAI.class
+Othello.class
+OthelloGUI.class
+Position.class
