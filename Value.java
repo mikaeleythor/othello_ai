@@ -20,6 +20,11 @@ public class Value {
         this.utility = utility;
     }
 
+    @Override
+    public String toString(){
+        return "(" + this.utility + "," + move + ")";
+    }
+
     
     
 }
