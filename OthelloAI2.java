@@ -1,4 +1,4 @@
-public class OthelloAI implements IOthelloAI {
+public class OthelloAI2 implements IOthelloAI {
 
     private int player;
     // private Stack<Position> currentPath = new Stack<>();
@@ -34,29 +34,30 @@ public class OthelloAI implements IOthelloAI {
             for (Position action : state.legalMoves()) {
                 GameState newState = new GameState(state.getBoard(), state.getPlayerInTurn());
                 if (newState.insertToken(action)) {
-                    // newState.changePlayer();
+                    newState.changePlayer();
 
                     Value value2 = minValue(newState);
 
                     if (value2.getUtility() > resultValue.getUtility()) {
-                        // System.out.println("MAX VALUE: VALUE 2: " + value2.toString() + ", RESULT: " + resultValue.toString());
-                        resultValue = new Value(value2.getUtility(), action);
+                        resultValue.setUtility(value2.getUtility());
+                        resultValue.setMove(action);
                     }
-                } /* else {
-                    System.out.println("MAX: TOKEN IS NOT INSERTED");
-                } */
-
+                }
             }
         } else {
             state.changePlayer();
-            minValue(state);
+            Value value2 = minValue(state);
+
+            if (value2.getUtility() > resultValue.getUtility()) {
+                resultValue.setUtility(value2.getUtility());
+                resultValue.setMove(null); //no move is set
+            }
         }
 
         // System.out.println("MAX VALUE - END: " + resultValue + ", DEPTH: " + depth--
         // + ", LEGAL MOVES: "
         // + state.legalMoves() + ", PLAYER: " + state.getPlayerInTurn() + "\n\n");
         // state.removeToken(currentPath.pop());
-        // System.out.println("MAX VALUE: " + resultValue.toString());
         return resultValue;
     }
 
@@ -75,25 +76,29 @@ public class OthelloAI implements IOthelloAI {
         boolean nextPlayerCanMove = !state.legalMoves().isEmpty();
         if (nextPlayerCanMove) {
             for (Position action : state.legalMoves()) {
+
                 GameState newState = new GameState(state.getBoard(), state.getPlayerInTurn());
                 if (newState.insertToken(action)) {
                     Value value2 = maxValue(newState);
                     if (value2.getUtility() < resultValue.getUtility()) {
-                        resultValue = new Value(value2.getUtility(), action);
+                        resultValue.setUtility(value2.getUtility());
+                        resultValue.setMove(action);
                     }
-                } /* else {
-                    System.out.println("MIN: TOKEN IS NOT INSERTED");
-                } */
+                }
             }
         } else {
             state.changePlayer();
-            maxValue(state);
+            Value value2 = maxValue(state);
+
+            if (value2.getUtility() > resultValue.getUtility()) {
+                resultValue.setUtility(value2.getUtility());
+                resultValue.setMove(null); //no move is set!
+            }
         }
         // System.out.println("MIN VALUE - END: " + resultValue + ", DEPTH: " + depth--
         // + ", LEGAL MOVES: "
         // + state.legalMoves() + ", PLAYER: " + state.getPlayerInTurn() + "\n\n");
         // state.removeToken(currentPath.pop());
-        // System.out.println("MIN VALUE: " + resultValue.toString());
         return resultValue;
     }
 
