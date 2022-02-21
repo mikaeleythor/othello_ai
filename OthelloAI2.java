@@ -50,7 +50,7 @@ public class OthelloAI2 implements IOthelloAI {
 
             if (value2.getUtility() > resultValue.getUtility()) {
                 resultValue.setUtility(value2.getUtility());
-                resultValue.setMove(null); //no move is set
+                resultValue.setMove(null); //no move is set!
             }
         }
 
