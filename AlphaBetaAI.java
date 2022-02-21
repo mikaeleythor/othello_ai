@@ -60,7 +60,12 @@ public class AlphaBetaAI implements IOthelloAI{
                    vMax.setMove(action);
                    extrema.setAlpha(maximum(new int[] {extrema.getAlpha(), vMax.getUtility()}));
                }
+
+               // The conditions of Beta pruning
                if (vMax.getUtility() >= extrema.getBeta()) {
+                   System.out.println("Beta pruning");
+                   System.out.println("Value: " + vMax.getUtility());
+                   System.out.println("Beta: " + extrema.getBeta());
                     return vMax;
                }
            }
@@ -89,7 +94,7 @@ public class AlphaBetaAI implements IOthelloAI{
                maxState.insertToken(action);
                maxState.changePlayer();
 
-               // Pass child state to minValue()
+               // Pass child state to maxValue()
                Value vMax = maxValue(maxState, extrema);
 
                // If action provides better utility, choose action
@@ -98,7 +103,12 @@ public class AlphaBetaAI implements IOthelloAI{
                    vMin.setMove(action);
                    extrema.setBeta(minimum(new int[] {extrema.getBeta(), vMin.getUtility()}));
                }
-               if (vMin.getUtility() <= extrema.getBeta()) {
+
+               // The conditions of Alpha pruning affect performance greatly
+               if (vMin.getUtility() < extrema.getAlpha()) {
+                   System.out.println("Alpha pruning");
+                   System.out.println("Value: " + vMin.getUtility());
+                   System.out.println("Alpha: " + extrema.getAlpha());
                     return vMin;
                }
            }
@@ -106,7 +116,7 @@ public class AlphaBetaAI implements IOthelloAI{
        }
     }
 
-    public int minimum(int[] arr) {
+    private int minimum(int[] arr) {
         // Returns the minimum value of an int array
         int min = (int) Double.POSITIVE_INFINITY;
         for (int i = 0; i < arr.length; i++) {
@@ -117,7 +127,7 @@ public class AlphaBetaAI implements IOthelloAI{
         return min;
     }
     
-    public int maximum(int[] arr) {
+    private int maximum(int[] arr) {
         // Returns the maximum value of an int array
         int max = (int) Double.NEGATIVE_INFINITY;
         for (int i = 0; i < arr.length; i++) {

@@ -29,4 +29,11 @@
 - **IOthelloAI is the interface that we need to implement**
 
 ---
+## Setup
 
+- **Player 1: Black**
+    Either a human or an AI implementing IOthelloAI class
+- **Player 2: White**
+    AI implementing IOthelloAI class
+
+"Player 1 always plays first"

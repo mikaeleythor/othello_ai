@@ -7,13 +7,16 @@ public class MinimaxAI implements IOthelloAI{
     private int playerID;
     private int playerIndex;
     private int otherPlayerID;
+    private int otherPlayerIndex;
 
     @Override
     public Position decideMove(GameState state){
+
         // Initialize attributes
         this.playerID = state.getPlayerInTurn();
         this.otherPlayerID = this.playerID == 1 ? 2 : 1;
         this.playerIndex = playerID - 1;
+        this.otherPlayerIndex = this.otherPlayerID - 1;
 
         // For readability, minimax-search is
         // separated from inherited method decideMove
@@ -66,7 +69,7 @@ public class MinimaxAI implements IOthelloAI{
         // End condition
         if (state.legalMoves().isEmpty()) {
 
-           int utility = state.countTokens()[this.otherPlayerID-1];
+           int utility = state.countTokens()[this.otherPlayerIndex];
            vMin.setUtility(utility);
            return vMin;
 
