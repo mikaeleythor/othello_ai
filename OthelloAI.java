@@ -9,6 +9,7 @@ public class OthelloAI implements IOthelloAI{
     private int otherPlayerID;
     //private int otherPlayerIndex;
 
+    @Override
     public OthelloAI(int playerID, GameState state){
         this.playerID = state.getPlayerInTurn();
         this.otherPlayerID = this.playerID == 1 ? 2 : 1;
