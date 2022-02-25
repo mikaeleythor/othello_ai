@@ -8,7 +8,7 @@ public class LookUpTable {
         int layer = half + 1;
         int points;
 
-        int isChangingFromTop = 0;
+        int isChangingFromTop = 0; //we want 1 two times before we change top layer to false.
         boolean isTop = true;
         boolean isLeft = true;
 
@@ -25,7 +25,7 @@ public class LookUpTable {
                 isChangingFromTop = 0;
                 isTop = false;
                 layer++;
-                System.out.println("IS TOP: LAYER: " + layer);
+                //System.out.println("IS TOP: LAYER: " + layer);
             }
                 
            
@@ -33,12 +33,12 @@ public class LookUpTable {
             int sameNumber = 0;
             for (int col = 0; col < board.length; col++) {
                
-                System.out.println("LAYER: " + layer + ", POINTS: " + points);
+                //System.out.println("LAYER: " + layer + ", POINTS: " + points);
                 if (isCorner(col, row))
                     board[row][col] = half + 1;
                 else {
                     if (!isLeftHalf(col)) {
-                        if (sameNumber != layer) { //if it is the same number
+                        if (sameNumber != layer) {
                             sameNumber++;
                             board[row][col] = points;
                         }
@@ -59,7 +59,7 @@ public class LookUpTable {
 
             if (layer == 1) {
                 isChangingFromTop++;
-                System.out.println("IS CHANG: LAYER: " + layer + ", " + isChangingFromTop);
+                //System.out.println("IS CHANG: LAYER: " + layer + ", " + isChangingFromTop);
             }
                 
         }
