@@ -10,7 +10,7 @@ public class LookUpTable {
 
         int isChangingFromTop = 0; //we want 1 two times before we change top layer to false.
         boolean isTop = true;
-        boolean isLeft = true;
+
 
         for (int row = 0; row < board.length; row++) {
             points = half + 1;
@@ -94,10 +94,6 @@ public class LookUpTable {
 
     private boolean isLeftHalf(int col) {
         return col < board.length / 2;
-    }
-
-    private boolean isTopHalf(int row) {
-        return row < board.length / 2;
     }
 
 }

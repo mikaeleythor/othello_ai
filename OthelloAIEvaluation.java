@@ -3,12 +3,15 @@ public class OthelloAIEvaluation implements IOthelloAI {
     private int player;
     // private Stack<Position> currentPath = new Stack<>();
     private int depth = 0;
+    private LookUpTable weightedTable;
 
     @Override
     public Position decideMove(GameState state) {
         System.out.println("DECIDE MOVE - START!\n" + printBoard(state) + "\n\n");
-
+        
         player = state.getPlayerInTurn();
+        weightedTable = new LookUpTable(state.getBoard().length);
+
         Value value = maxValue(state, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
 
         System.out.println("DECIDE MOVE - END!\n" + value.toString() + "\n" +
@@ -18,7 +21,7 @@ public class OthelloAIEvaluation implements IOthelloAI {
 
     private Value maxValue(GameState state, double alpha, double beta) {
         System.out.println("MAX VALUE - START: EVAL: " + eval(state) + ", BOARD:\n" + printBoard(state) + 
-        ", DEPTH: " + depth + "\n");
+        "DEPTH: " + depth + "\n");
 
         if (state.isFinished()) {
             Value value = new Value(utility(state), null); //UTILITY FUNCTION --> EVALUATION FUNCTION
@@ -114,23 +117,27 @@ public class OthelloAIEvaluation implements IOthelloAI {
     public int utility(GameState state) {
         return state.countTokens()[player - 1];
     }
-    
-    private int[] eval(GameState state) {
+
+    private int[] points(GameState state) {
         int[][] board = state.getBoard();
         int size = state.getBoard().length;
-        LookUpTable pointTable = new LookUpTable(size);
+        
 
         int tokens1 = 0;
     	int tokens2 = 0;
     	for (int i = 0; i < size; i++){
     		for (int j = 0; j < size; j++){
     			if ( board[i][j] == 1 )
-    				tokens1 += pointTable.getBoard()[i][j];
+    				tokens1 += weightedTable.getBoard()[i][j];
     			else if ( board[i][j] == 2 )
-                    tokens2 += pointTable.getBoard()[i][j];
+                    tokens2 += weightedTable.getBoard()[i][j];
     		}
     	}
     	return new int[]{tokens1, tokens2};
+    }
+
+    private int eval(GameState state) {
+        return points(state)[player-1];
     }
 
 
