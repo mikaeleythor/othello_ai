@@ -1,4 +1,4 @@
-public class OthelloAI2 implements IOthelloAI {
+public class OthelloAI implements IOthelloAI {
 
     private int player;
     // private Stack<Position> currentPath = new Stack<>();
