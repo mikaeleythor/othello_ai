@@ -21,13 +21,13 @@ public class OthelloAIEvaluation implements IOthelloAI {
 
     private Value maxValue(GameState state, double alpha, double beta) {
         depth++; //when maxValue is called, we go down the tree
-        System.out.println("MAX VALUE - START: EVAL: " + eval(state) + ", BOARD:\n" + printBoard(state) + 
-        "DEPTH: " + depth + "\n");
+        // System.out.println("MAX VALUE - START: EVAL: " + eval(state) + ", BOARD:\n" + printBoard(state) + 
+        // "DEPTH: " + depth + "\n");
 
-        if (state.isFinished()) {
+        if (cutOff()) {
             depth--; //we go one step up the tree
-            Value value = new Value(utility(state), null); //UTILITY FUNCTION --> EVALUATION FUNCTION
-            System.out.println("IS FINISH: " + value.toString() + ", DEPTH: " + depth);
+            Value value = new Value(eval(state), null); //UTILITY FUNCTION --> EVALUATION FUNCTION
+            // System.out.println("IS CUTOFF: " + value.toString() + ", DEPTH: " + depth);
 
             return value;
         }
@@ -42,7 +42,7 @@ public class OthelloAIEvaluation implements IOthelloAI {
                     newState.changePlayer();
 
                     Value value2 = minValue(newState, alpha, beta);
-                    System.out.println("MIN VALUE CALCULATED: " + value2.toString() + ", DEPTH: " + depth);
+                    // System.out.println("MIN VALUE CALCULATED: " + value2.toString() + ", DEPTH: " + depth);
 
                     if (value2.getUtility() > resultValue.getUtility()) {
                         resultValue.setUtility(value2.getUtility());
@@ -58,31 +58,26 @@ public class OthelloAIEvaluation implements IOthelloAI {
         } else {
             state.changePlayer();
             Value value2 = minValue(state, alpha, beta);
-            System.out.println("MIN VALUE CALCULATED: " + value2.toString() + ", DEPTH: " + depth);
+            // System.out.println("MIN VALUE CALCULATED: " + value2.toString() + ", DEPTH: " + depth);
 
             if (value2.getUtility() > resultValue.getUtility()) {
                 resultValue.setUtility(value2.getUtility());
                 resultValue.setMove(null); //no move is set!
             }
         }
-
-        // System.out.println("MAX VALUE - END: " + resultValue + ", DEPTH: " + depth--
-        // + ", LEGAL MOVES: "
-        // + state.legalMoves() + ", PLAYER: " + state.getPlayerInTurn() + "\n\n");
-        // state.removeToken(currentPath.pop());
         depth--;
         return resultValue;
     }
 
     private Value minValue(GameState state, double alpha, double beta) {
         depth++; //when minValue is called, we go down the tree
-        System.out.println("MIN VALUE - START: EVAL: " + eval(state) + ", BOARD:\n" + printBoard(state) + 
-        ", DEPTH: " + depth + "\n");
+        // System.out.println("MIN VALUE - START: EVAL: " + eval(state) + ", BOARD:\n" + printBoard(state) + 
+        // ", DEPTH: " + depth + "\n");
 
-        if (state.isFinished()) {
+        if (cutOff()) {
             depth--; //we go one step up the tree
-            Value value = new Value(utility(state), null); //UTILITY FUNCTION --> EVALUATION FUNCTION
-            System.out.println("IS FINISH: " + value.toString() + ", DEPTH: " + depth);
+            Value value = new Value(eval(state), null); //UTILITY FUNCTION --> EVALUATION FUNCTION
+            // System.out.println("IS CUT OFF: " + value.toString() + ", DEPTH: " + depth);
             
             return value;
         }
@@ -96,7 +91,7 @@ public class OthelloAIEvaluation implements IOthelloAI {
                 if (newState.insertToken(action)) {
 
                     Value value2 = maxValue(newState, alpha, beta);
-                    System.out.println("MAX VALUE CALCULATED: " + value2.toString() + ", DEPTH: " + depth);
+                    // System.out.println("MAX VALUE CALCULATED: " + value2.toString() + ", DEPTH: " + depth);
 
                     if (value2.getUtility() < resultValue.getUtility()) {
                         resultValue.setUtility(value2.getUtility());
@@ -112,7 +107,7 @@ public class OthelloAIEvaluation implements IOthelloAI {
         } else {
             state.changePlayer();
             Value value2 = maxValue(state, alpha, beta);
-            System.out.println("MAX VALUE CALCULATED: " + value2.toString() + ", DEPTH: " + depth);
+            // System.out.println("MAX VALUE CALCULATED: " + value2.toString() + ", DEPTH: " + depth);
 
             if (value2.getUtility() > resultValue.getUtility()) {
                 resultValue.setUtility(value2.getUtility());
@@ -151,11 +146,8 @@ public class OthelloAIEvaluation implements IOthelloAI {
     }
 
     private boolean cutOff () {
-        return depth == 7; //this can be changed!
+        return depth == 10; //this can be changed!
     }
-
-
-
 
     // DEBUG METHODS
     private String printBoard(GameState state) {
@@ -169,7 +161,5 @@ public class OthelloAIEvaluation implements IOthelloAI {
         }
         return s;
     }
-
-
     
 }
