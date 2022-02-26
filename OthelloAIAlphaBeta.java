@@ -20,7 +20,7 @@ public class OthelloAIAlphaBeta implements IOthelloAI {
         // ", DEPTH: " + depth + "\n");
 
         if (state.isFinished()) {
-            Value value = new Value(state.countTokens()[player - 1], null);
+            Value value = new Value(utility(state), null);
             // System.out.println("IS FINISH: " + value.toString() + ", DEPTH: " + depth--);
             // state.removeToken(currentPath.pop()); //not sure about this, but it seems
             // like, the board is filled up, and the tokens aren't removed
@@ -69,7 +69,7 @@ public class OthelloAIAlphaBeta implements IOthelloAI {
         // System.out.println("MIN VALUE - START: Legal moves: " + state.legalMoves() +
         // ", DEPTH: " + depth + "\n");
         if (state.isFinished()) {
-            Value value = new Value(state.countTokens()[player - 1], null);
+            Value value = new Value(utility(state), null);
             // System.out.println("IS FINISH: " + value.toString() + ", DEPTH: " + depth--);
             // state.removeToken(currentPath.pop());
 
@@ -111,6 +111,10 @@ public class OthelloAIAlphaBeta implements IOthelloAI {
     // HELP METHODS:
     private boolean isEqual(Position p1, Position p2) {
         return p1.col == p2.col && p1.row == p2.row;
+    }
+
+    public int utility(GameState state) {
+        return state.countTokens()[player - 1];
     }
 
     // DEBUG METHODS

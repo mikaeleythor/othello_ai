@@ -17,11 +17,11 @@ public class OthelloAIEvaluation implements IOthelloAI {
     }
 
     private Value maxValue(GameState state, double alpha, double beta) {
-        // System.out.println("MAX VALUE - START: Legal moves: " + state.legalMoves() +
-        // ", DEPTH: " + depth + "\n");
+        System.out.println("MAX VALUE - START: EVAL: " + eval(state) + ", BOARD:\n" + printBoard(state) + 
+        ", DEPTH: " + depth + "\n");
 
         if (state.isFinished()) {
-            Value value = new Value(state.countTokens()[player - 1], null); //UTILITY FUNCTION --> EVALUATION FUNCTION
+            Value value = new Value(utility(state), null); //UTILITY FUNCTION --> EVALUATION FUNCTION
             // System.out.println("IS FINISH: " + value.toString() + ", DEPTH: " + depth--);
             // state.removeToken(currentPath.pop()); //not sure about this, but it seems
             // like, the board is filled up, and the tokens aren't removed
@@ -67,10 +67,10 @@ public class OthelloAIEvaluation implements IOthelloAI {
     }
 
     private Value minValue(GameState state, double alpha, double beta) {
-        // System.out.println("MIN VALUE - START: Legal moves: " + state.legalMoves() +
-        // ", DEPTH: " + depth + "\n");
+        System.out.println("MIN VALUE - START: EVAL: " + eval(state) + ", BOARD:\n" + printBoard(state) + 
+        ", DEPTH: " + depth + "\n");
         if (state.isFinished()) {
-            Value value = new Value(state.countTokens()[player - 1], null); //UTILITY FUNCTION --> EVALUATION FUNCTION
+            Value value = new Value(utility(state), null); //UTILITY FUNCTION --> EVALUATION FUNCTION
             // System.out.println("IS FINISH: " + value.toString() + ", DEPTH: " + depth--);
             // state.removeToken(currentPath.pop());
 
@@ -110,6 +110,11 @@ public class OthelloAIEvaluation implements IOthelloAI {
     }
 
     // HELP METHODS:
+
+    public int utility(GameState state) {
+        return state.countTokens()[player - 1];
+    }
+    
     private int[] eval(GameState state) {
         int[][] board = state.getBoard();
         int size = state.getBoard().length;
@@ -128,6 +133,9 @@ public class OthelloAIEvaluation implements IOthelloAI {
     	return new int[]{tokens1, tokens2};
     }
 
+
+
+
     // DEBUG METHODS
     private String printBoard(GameState state) {
         String s = "";
@@ -140,6 +148,7 @@ public class OthelloAIEvaluation implements IOthelloAI {
         }
         return s;
     }
+
 
     
 }
