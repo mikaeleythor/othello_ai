@@ -27,6 +27,7 @@ public class OthelloAI implements IOthelloAI {
 
             return value;
         }
+        
         Value resultValue = new Value((int) Double.NEGATIVE_INFINITY, null);
 
         boolean nextPlayerCanMove = !state.legalMoves().isEmpty();

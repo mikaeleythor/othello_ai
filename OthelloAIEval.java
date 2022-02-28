@@ -157,15 +157,15 @@ public class OthelloAIEval implements IOthelloAI {
     }
 
     private int eval(GameState state) {
-        int p = utility(state);
-        int c = cornerOccupancy(state);
-        float l = getCornerCloseness(state);
-        int m = mobility(state);
-        int f = frontierDisks(state);
-        int d = points(state)[player - 1] - points(state)[opponentPlayer - 1];
+        int pieceDifference = utility(state);
+        int cornerOccupancy = cornerOccupancy(state);
+        float cornerCloseness = cornerCloseness(state);
+        int mobility = mobility(state);
+        int frontierDisks = frontierDisks(state);
+        int lookUpTablePoints = points(state)[player - 1] - points(state)[opponentPlayer - 1];
         
         
-	    return (int)((10 * p) + (801.724 * c) + (382.026 * l) + (78.922 * m) + (74.396 * f) + (10 * d));
+	    return (int)((10 * pieceDifference) + (801.724 * cornerOccupancy) + (382.026 * cornerCloseness) + (78.922 * mobility) + (74.396 * frontierDisks) + (10 * lookUpTablePoints));
         //return points(state)[player - 1] - points(state)[opponentPlayer - 1];
     }
 
@@ -208,7 +208,7 @@ public class OthelloAIEval implements IOthelloAI {
         return 0; // TODO!!!
     }
 
-    private float getCornerCloseness(GameState state) { // l: corner closesness
+    private float cornerCloseness(GameState state) { // l: corner closesness
         int playerCC = 0;
         int opponentCC = 0;
 
