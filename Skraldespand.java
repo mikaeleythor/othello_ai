@@ -1,16 +1,16 @@
+/* public class Skraldespand {
+    
+}
 public class OthelloAIEval implements IOthelloAI {
 
     private int player;
-    private LookUpTable weightedTable;
-    private int depth = 0;
+    private int depth;
+    // private Stack<Position> currentPath = new Stack<>();
 
     @Override
     public Position decideMove(GameState state) {
         System.out.println("DECIDE MOVE - START!\n" + printBoard(state) + "\n\n");
 
-        weightedTable = new LookUpTable(state.getBoard().length);
-        depth = 0; //count from 0
-        
         player = state.getPlayerInTurn();
         Value value = maxValue(state, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
 
@@ -20,23 +20,13 @@ public class OthelloAIEval implements IOthelloAI {
     }
 
     private Value maxValue(GameState state, double alpha, double beta) {
-        depth++; 
-        // System.out.println("MAX VALUE - START: Legal moves: " + state.legalMoves() +
-        // ", DEPTH: " + depth + "\n");
+        depth++;
 
         if (state.isFinished()) {
             Value value = new Value(utility(state), null);
             depth--;
-            // System.out.println("IS FINISH: " + value.toString() + ", DEPTH: " + depth--);
-            // state.removeToken(currentPath.pop()); //not sure about this, but it seems
-            // like, the board is filled up, and the tokens aren't removed
-
             return value;
-        } else if (cutOff()) {
-            depth--;
-            return new Value(eval(state), null);
         }
-
         Value resultValue = new Value((int) Double.NEGATIVE_INFINITY, null);
 
         boolean nextPlayerCanMove = !state.legalMoves().isEmpty();
@@ -69,29 +59,17 @@ public class OthelloAIEval implements IOthelloAI {
             }
         }
 
-        // System.out.println("MAX VALUE - END: " + resultValue + ", DEPTH: " + depth--
-        // + ", LEGAL MOVES: "
-        // + state.legalMoves() + ", PLAYER: " + state.getPlayerInTurn() + "\n\n");
-        // state.removeToken(currentPath.pop());
         depth--;
         return resultValue;
     }
 
     private Value minValue(GameState state, double alpha, double beta) {
-        depth++; 
-        // System.out.println("MIN VALUE - START: Legal moves: " + state.legalMoves() +
-        // ", DEPTH: " + depth + "\n");
+        depth++;
         if (state.isFinished()) {
             Value value = new Value(utility(state), null);
-            // System.out.println("IS FINISH: " + value.toString() + ", DEPTH: " + depth--);
-            // state.removeToken(currentPath.pop());
             depth--;
             return value;
-        } else if (cutOff()) {
-            depth--;
-            return new Value(eval(state), null);
         }
-
         Value resultValue = new Value((int) Double.POSITIVE_INFINITY, null);
 
         boolean nextPlayerCanMove = !state.legalMoves().isEmpty();
@@ -121,19 +99,17 @@ public class OthelloAIEval implements IOthelloAI {
                 resultValue.setMove(null); //no move is set!
             }
         }
-        // System.out.println("MIN VALUE - END: " + resultValue + ", DEPTH: " + depth--
-        // + ", LEGAL MOVES: "
-        // + state.legalMoves() + ", PLAYER: " + state.getPlayerInTurn() + "\n\n");
-        // state.removeToken(currentPath.pop());
         depth--;
         return resultValue;
     }
 
     // HELP METHODS:
+    private boolean isEqual(Position p1, Position p2) {
+        return p1.col == p2.col && p1.row == p2.row;
+    }
 
     public int utility(GameState state) {
-        int opponentPlayer = (player == 1) ? 2 : 1;
-        return state.countTokens()[player - 1] - state.countTokens()[opponentPlayer-1];
+        return state.countTokens()[player - 1];
     }
 
     // DEBUG METHODS
@@ -149,37 +125,5 @@ public class OthelloAIEval implements IOthelloAI {
         return s;
     }
 
-
-
-    private int[] points(GameState state) {
-        int[][] board = state.getBoard();
-        int size = state.getBoard().length;
-        
-
-        int tokens1 = 0;
-    	int tokens2 = 0;
-    	for (int i = 0; i < size; i++){
-    		for (int j = 0; j < size; j++){
-    			if ( board[i][j] == 1 )
-    				tokens1 += weightedTable.getBoard()[i][j];
-    			else if ( board[i][j] == 2 )
-                    tokens2 += weightedTable.getBoard()[i][j];
-    		}
-    	}
-    	return new int[]{tokens1, tokens2};
-    }
-
-    private int eval(GameState state) {
-        //if (state.isFinished()) return utility(state);
-        int opponentPlayer = (player == 1) ? 2 : 1;
-        return points(state)[player-1]-points(state)[opponentPlayer-1]; 
-    } 
-
-    private boolean cutOff () {
-        // return false;
-        return depth == 10; //this can be changed!
-    }
     
-
-
-}
+} */
