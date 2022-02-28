@@ -1,6 +1,8 @@
 public class OthelloAIEvaluation implements IOthelloAI {
 
+    /** https://kartikkukreja.wordpress.com/2013/03/30/heuristic-function-for-reversiothello/#more-33 */
     private int player;
+    private int opponentPlayer;
     private int depth;
     private LookUpTable weightedTable;
 
@@ -9,6 +11,8 @@ public class OthelloAIEvaluation implements IOthelloAI {
         System.out.println("DECIDE MOVE - START!\n" + printBoard(state) + "\n\n");
         
         player = state.getPlayerInTurn();
+        opponentPlayer = player == 1 ? 2 : 1;
+
         weightedTable = new LookUpTable(state.getBoard().length);
         depth = 0; //count from 0
 
@@ -119,10 +123,112 @@ public class OthelloAIEvaluation implements IOthelloAI {
     }
 
     // HELP METHODS:
-    public int utility(GameState state) {
-        return state.countTokens()[player - 1];
+    private boolean cutOff () {
+        return depth == 10; //this can be changed!
     }
 
+    private int utility(GameState state) {
+        return state.countTokens()[player - 1] - state.countTokens()[opponentPlayer-1];
+    }
+
+    // HEURISTIC METHODS:
+    /** The ratio of the number of the players moves to the number of moves in total (the legal moves for the player + the opponent)  */
+    private int mobility(GameState state) {
+        state.changePlayer();
+        int minLegalMoves = state.legalMoves().size();
+        state.changePlayer();
+        int maxLegalMoves = state.legalMoves().size();
+        if (minLegalMoves + maxLegalMoves != 0) return (100*(maxLegalMoves-minLegalMoves))/(maxLegalMoves+minLegalMoves);
+        else return 0;
+    }
+
+    /** Returns the positions in the corners  */
+    private Position[] getCorners(GameState state) {
+        int size = state.getBoard().length;
+        Position[] corners = new Position[] {new Position(0, 0), new Position(0, size-1), new Position(size-1, 0), new Position(size-1, size-1)};
+        return corners;
+    }
+
+    private int cornersCaptured(GameState state) {
+        int maxCorners = 0;
+        int minCorners = 0;
+
+        for (Position corner : getCorners(state)) {
+            if (state.getBoard()[corner.col][corner.row] == player) maxCorners++;
+            else if (state.getBoard()[corner.col][corner.row] == opponentPlayer) minCorners++;
+        }
+
+        if (maxCorners + minCorners != 0) return (100 * (maxCorners - minCorners) / (maxCorners + minCorners));
+        else return 0;
+    }
+
+    private Position[] getAroundCornerPositions(GameState state, Position corner) {
+        
+        int size = state.getBoard().length;
+
+        if (corner.col == 0 && corner.row == 0) {
+            return new Position[] {new Position(0,1), new Position(1, 1), new Position(1, 0)};
+        }
+
+        if (corner.col == 0 && corner.row == size-1) {
+            return new Position[] {new Position(0,size-2), new Position(1, size-2), new Position(1, size-1)};
+        }
+
+        if (corner.col == size-1 && corner.row == 0) {
+            return new Position[] {new Position(size-2,0), new Position(size-2,1), new Position(size-1, 1)};
+        }
+
+        if (corner.col == size-1 && corner.row == size-1) {
+            return new Position[] {new Position(size-2,size-1), new Position(size-2,size-2), new Position(size-1, size-2)};
+        }
+
+        return null;
+    }
+
+    /** http://www.soongsky.com/othello/en/strategy/notation.php */
+    private Position[] getXSquares(GameState state) {
+        int size = state.getBoard().length;
+        return new Position[] {new Position(1, 1), new Position(1, size-2), new Position(size-2,1), new Position(size-2,size-2)};
+    }
+
+    private Position[] getCSquares(GameState state) {
+        int size = state.getBoard().length;
+        return new Position[] {
+            new Position(0,1), new Position(1, 0),
+            new Position(0,size-2), new Position(1, size-1),
+            new Position(size-2,0), new Position(size-1, 1),
+            new Position(size-2,size-1), new Position(size-1, size-2)
+        };
+       
+    }
+
+    private int potentialMobility(GameState state) {
+        return 0; //TODO!!!
+    }
+
+    /**
+     * 
+     * @param state 
+     * @return the difference in coins between the max and min player
+     */
+    private int coinPartyHeuristicValue(GameState state) {
+        int maxPlayerCoin = state.countTokens()[player-1];
+        int minPlayerCoin = state.countTokens()[opponentPlayer-1];
+        
+        return 100*(maxPlayerCoin-minPlayerCoin)/(maxPlayerCoin+minPlayerCoin);
+
+    }
+
+    /* private int stabilityValue(GameState state) {
+        //https://kartikkukreja.wordpress.com/2013/03/30/heuristic-function-for-reversiothello/#more-33
+        //untable: can be captured in the next move
+        //stable: can not be captured: CORNERS!
+        //semi-stabel: can be captured in the future
+        //Typical weights could be 1 for stable coins, -1 for unstable coins and 0 for semi-stable coins.
+    }
+ */
+
+    //Look up table points:
     private int[] points(GameState state) {
         int[][] board = state.getBoard();
         int size = state.getBoard().length;
@@ -142,12 +248,11 @@ public class OthelloAIEvaluation implements IOthelloAI {
     }
 
     private int eval(GameState state) {
+        if (state.isFinished()) return utility(state);
         return points(state)[player-1];
-    }
+    } 
 
-    private boolean cutOff () {
-        return depth == 10; //this can be changed!
-    }
+    
 
     // DEBUG METHODS
     private String printBoard(GameState state) {
