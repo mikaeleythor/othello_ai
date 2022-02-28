@@ -1,7 +1,6 @@
-import java.util.ArrayList;
-
 public class OthelloAIEval implements IOthelloAI {
 
+    /** HELP FROM https://kartikkukreja.wordpress.com/2013/03/30/heuristic-function-for-reversiothello/#more-33 */
     private int player;
     private LookUpTable weightedTable;
     private int depth = 0;
@@ -178,8 +177,6 @@ public class OthelloAIEval implements IOthelloAI {
     // ----------------------------------------------------------------------------------------
 
     // HEURISTIC FUNCTIONS:
-    // https://github.com/kartikkukreja/blog-codes/blob/master/src/Heuristic%20Function%20for%20Reversi%20(Othello).cpp
-
     /**
      * The ratio of the number of the players moves to the number of moves in total
      * (the legal moves for the player + the opponent)
@@ -313,7 +310,6 @@ public class OthelloAIEval implements IOthelloAI {
         return null;
     }
 
-    /** http://www.soongsky.com/othello/en/strategy/notation.php */
     private Position[] getXSquares(GameState state) {
         int size = state.getBoard().length;
         return new Position[] { new Position(1, 1), new Position(1, size - 2), new Position(size - 2, 1),
