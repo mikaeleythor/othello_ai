@@ -1,6 +1,6 @@
-public class OthelloAIEval implements IOthelloAI {
+public class OthelloAIEval13 implements IOthelloAI {
 
-    /** HELP FROM https://kartikkukreja.wordpress.com/2013/03/30/heuristic-function-for-reversiothello/#more-33 */
+    /** Thanks to https://kartikkukreja.wordpress.com/2013/03/30/heuristic-function-for-reversiothello/#more-33 */
     private int player;
     private LookUpTable weightedTable;
     private int depth = 0;
