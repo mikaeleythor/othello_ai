@@ -165,13 +165,13 @@ public class OthelloAIEval13 implements IOthelloAI {
         int lookUpTablePoints = points(state)[player - 1] - points(state)[opponentPlayer - 1];
         
         
-	    return (int)((10 * pieceDifference) + (801.724 * cornerOccupancy) + (382.026 * cornerCloseness) + (78.922 * mobility) + (74.396 * frontierDisks) + (10 * lookUpTablePoints));
+	    return (int)((1 * pieceDifference) + (80.1724 * cornerOccupancy) + (38.2026 * cornerCloseness) + (7.8922 * mobility) + (7.4396 * frontierDisks) + (1.0 * lookUpTablePoints));
         //return points(state)[player - 1] - points(state)[opponentPlayer - 1];
     }
 
     private boolean cutOff(GameState state) {
         // return false;
-        return depth == 5 || state.isFinished(); // this can be changed!
+        return depth == 8 || state.isFinished(); // this can be changed!
     }
 
     // ----------------------------------------------------------------------------------------

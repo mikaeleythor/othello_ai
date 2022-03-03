@@ -21,12 +21,12 @@ public class LookUpTable {
 
     public int[][] sixBoard(){
         return new int[][] {
-            new int[] {3, -2, 2, 2, -2, 3},
-            new int[] {-2, -3, 0, 0, -3, -2},
+            new int[] {4, -2, 2, 2, -2, 4},
+            new int[] {-2, -4, 0, 0, -4, -2},
             new int[] {2, 0, 0, 0, 0, 2},
             new int[] {2, 0, 0, 0, 0, 2},
-            new int[] {-2, -3, 0, 0, -3, -2},
-            new int[] {3, -2, 2, 2, -2, 3}            
+            new int[] {-2, -4, 0, 0, -4, -2},
+            new int[] {4, -2, 2, 2, -2, 4}            
         };
     }
 
