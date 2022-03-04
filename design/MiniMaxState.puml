@@ -1,0 +1,7 @@
+@startuml
+
+/'state legalMoves <<fork>>'/
+state recursion{
+    [*] -> maxValue : value
+}
+@enduml

@@ -2,9 +2,9 @@ public class Depth {
     private int max;
     private int current;
 
-    public Depth(int max){
+    public Depth(int max, int start){
         this.max = max;
-        this.current = 0;
+        this.current = start;
     }
 
     public Boolean isMax(){
@@ -14,7 +14,15 @@ public class Depth {
     public void increment(){
         this.current++;
     }
-    
+
+    public int getCurrent(){
+        return this.current;
+    }
+
+    public int getMax(){
+        return this.max;
+    }
+   
     
     
 }

@@ -6,8 +6,47 @@ public class AdversarialSearchAI implements IOthelloAI{
     // Player id is either 1 or 2
     private int playerID;
     private int playerIndex;
+
+    // Relative index is ID - 1
     private int otherPlayerID;
     private int otherPlayerIndex;
+
+    // Max recursion depth
+    private int maxDepth = 10;
+
+    // Main goal is winning not acquiring tokens, so winning-utility is hardcoded
+    private float maxUtil = 100f;
+
+    // Heuristics are not perfect, utility of possible win is higher
+    private float confidence = 0.6f;
+
+    // Heuristic names and weight specified
+    private String[] heuristicNames = {"parity", "mobility"};
+    private float[] heuristicWeights = {0.5f, 0.5f};
+
+    // HashMap for heuristic names and weights for ease of use
+    private HashMap<String, Integer> weightMap = new HashMap<String, Integer>();
+
+    // This method scales the weights of the heuristic utilities such that
+    // their values do not superceed values of solid utility functions
+    private int[] scaleHeuristics(float[] heuristicWeights){
+
+        // Initialize weights
+        int[] scaledWeights = {0, 0};
+        for (int i = 0; i < heuristicWeights.length; i++){
+
+            // Weights multiplied by hardcoded utility and confidence in heuristics
+            scaledWeights[i] = (int) (heuristicWeights[i] * this.confidence * this.maxUtil);
+        }
+        return scaledWeights;
+    }
+
+    // Create hashmap for heuristics
+    private void mapWeights(String[] names, int[] weights){
+        for (int i = 0; i < weights.length; i++){
+            this.weightMap.put(names[i], weights[i]);
+        }
+    }
 
     @Override
     public Position decideMove(GameState state){
@@ -18,100 +57,175 @@ public class AdversarialSearchAI implements IOthelloAI{
         this.playerIndex = playerID - 1;
         this.otherPlayerIndex = this.otherPlayerID - 1;
 
-        // For readability, minimax-search is
+        this.mapWeights(this.heuristicNames, this.scaleHeuristics(this.heuristicWeights));
+
+        // For the sake of readability and modularity, minimax-search is
         // separated from inherited method decideMove
         return miniMaxSearch(state);
     }
 
     public Position miniMaxSearch(GameState state){
+
+        // Initialize extrema constants
         AlphaBeta extrema = new AlphaBeta();
-        Depth depth = new Depth(10);
+
+        // Initilize depth object
+        Depth depth = new Depth(this.maxDepth, 0);
+
+        // Begin recursion
         Value value = this.maxValue(state, extrema, depth);
+
+        // Return move
         return value.getMove();
     } 
 
     public Value maxValue(GameState state, AlphaBeta extrema, Depth depth) {
-        // Initialize return variable
+        
+        // Initialize new instance of Value class
         Value vMax = new Value((int) Double.NEGATIVE_INFINITY, null);
         
-        // End condition
+        // Stop recursion if no moves are available
         if (state.legalMoves().isEmpty()) {
-           int utility = state.countTokens()[this.playerIndex];
-           vMax.setUtility(utility);
-           return vMax;
+            
+            // Calculate utility based on player and state
+            int utility = this.utilityValue(state);
+            vMax.setUtility(utility);
+            return vMax;
 
         } else if ( depth.isMax() ){
-            // Evaluate
-           int utility = state.countTokens()[this.playerIndex];
-           vMax.setUtility(utility);
-           return vMax;
+
+            // Evaluate utility based on heuristics
+            int evaluation = this.evaluateBoard(this.playerIndex, state);
+            vMax.setUtility(evaluation);
+            return vMax;
+
+
         } else {
 
-           for (Position action : state.legalMoves() ) {
+            // If moves are available, increment recursion depth
+            depth.increment();
 
-               // Initialize child state
-               GameState minState = new GameState(state.getBoard(), this.otherPlayerID);
+            // Iterate through all legal moves
+            for (Position action : state.legalMoves() ) {
 
-               // Test move on child state
-               minState.insertToken(action);
-               minState.changePlayer();
+                // Initialize child state
+                GameState minState = new GameState(state.getBoard(), this.otherPlayerID);
 
-               // Pass child state to minValue()
-               Value vMin = minValue(minState, extrema);
+                // Test move on child state
+                minState.insertToken(action);
+                minState.changePlayer();
 
-               // If action provides better utility, choose action
-               if (vMin.getUtility() > vMax.getUtility()) {
-                   vMax.setUtility(vMin.getUtility());
-                   vMax.setMove(action);
-                   extrema.setAlpha(maximum(new int[] {extrema.getAlpha(), vMax.getUtility()}));
-               }
-               if (vMax.getUtility() >= extrema.getBeta()) {
+                // Create new instance of depth tracker
+                Depth newDepth = new Depth(this.maxDepth, depth.getCurrent());
+
+                // Pass child state to minValue()
+                Value vMin = minValue(minState, extrema, newDepth);
+
+                // If action provides better utility, choose action
+                if (vMin.getUtility() > vMax.getUtility()) {
+                    vMax.setUtility(vMin.getUtility());
+                    vMax.setMove(action);
+                    extrema.setAlpha(maximum(new int[] {extrema.getAlpha(), vMax.getUtility()}));
+                }
+
+                // Beta cut
+                if (vMax.getUtility() >= extrema.getBeta()) {
                     return vMax;
-               }
+                }
            }
            return vMax;
        }
     }
 
-    public Value minValue(GameState state, AlphaBeta extrema) {
+    public Value minValue(GameState state, AlphaBeta extrema, Depth depth) {
+
         // Initialize return variable
         Value vMin = new Value((int) Double.POSITIVE_INFINITY, null);
+        
         // End condition
         if (state.legalMoves().isEmpty()) {
+            int utility = this.utilityValue(state);
+            vMin.setUtility(utility);
+            return vMin;
 
-           int utility = state.countTokens()[this.otherPlayerIndex];
-           vMin.setUtility(utility);
-           return vMin;
+        } else if ( depth.isMax() ){
+            int evaluation = this.evaluateBoard(this.otherPlayerIndex, state);
+            vMin.setUtility(evaluation);
+            return vMin;
+
 
         } else {
 
-           for (Position action : state.legalMoves() ) {
+            depth.increment();
+            for (Position action : state.legalMoves() ) {
 
-               // Initialize child state
-               GameState maxState = new GameState(state.getBoard(), this.playerID);
+                // Initialize child state
+                GameState maxState = new GameState(state.getBoard(), this.playerID);
 
-               // Test move on child state
-               maxState.insertToken(action);
-               maxState.changePlayer();
+                // Test move on child state
+                maxState.insertToken(action);
+                maxState.changePlayer();
 
-               // Pass child state to maxValue()
-               Value vMax = maxValue(maxState, extrema);
+                Depth newDepth = new Depth(this.maxDepth, depth.getCurrent());
 
-               // If action provides better utility, choose action
-               if (vMax.getUtility() < vMin.getUtility()) {
-                   vMin.setUtility(vMax.getUtility());
-                   vMin.setMove(action);
-                   extrema.setBeta(minimum(new int[] {extrema.getBeta(), vMin.getUtility()}));
-               }
-               if (vMin.getUtility() <= extrema.getAlpha()) {
+                // Pass child state to minValue()
+                Value vMax = maxValue(maxState, extrema, newDepth);
+
+                // If action provides better utility, choose action
+                if (vMax.getUtility() < vMin.getUtility()) {
+
+                    vMin.setUtility(vMax.getUtility());
+                    vMin.setMove(action);
+                    extrema.setBeta(minimum(new int[] {extrema.getBeta(), vMin.getUtility()}));
+                }
+                if (vMin.getUtility() <= extrema.getAlpha()) {
                     return vMin;
-               }
-           }
-           return vMin;
+                }
+            }
+            return vMin;
        }
     }
     
 
+    // HEURISTICS
+    
+    // Should always return a value between -1 and 1
+    private int parity(int playerIndex, GameState state){
+        int[] tokenArray = state.countTokens();
+        return (tokenArray[playerIndex] - tokenArray[playerIndex == 0 ? 1 : 0]) / (tokenArray[0] + tokenArray[1]);
+    }
+
+    private int mobility(int playerIndex, GameState state){
+        ArrayList<Position> playerLegalMoves = state.legalMoves();
+        state.changePlayer();
+        ArrayList<Position> otherPlayerLegalMoves = state.legalMoves();
+        state.changePlayer();
+
+        return (playerLegalMoves.size() - otherPlayerLegalMoves.size()) / (playerLegalMoves.size() + otherPlayerLegalMoves.size());
+    }
+
+    private int evaluateBoard(int playerIndex, GameState state){
+        int evaluation = 0;
+        evaluation += this.weightMap.get("parity")*this.parity(playerIndex, state);
+        evaluation += this.weightMap.get("mobility")*this.mobility(playerIndex, state);
+
+        return evaluation;
+    }
+
+    private int utilityValue(GameState state){
+        if ( state.isFinished() ){
+            int[] tokens = state.countTokens();
+            if ( tokens[this.playerIndex] > tokens[this.otherPlayerIndex] ){
+                return (int) this.maxUtil;
+            } else {
+                return (int) -this.maxUtil;
+            }
+        } else {
+            return this.evaluateBoard(state.getPlayerInTurn() - 1, state);
+        }
+    }
+
+    // HELPER FUNCTIONS
     private int minimum(int[] arr) {
         // Returns the minimum value of an int array
         int min = (int) Double.POSITIVE_INFINITY;
