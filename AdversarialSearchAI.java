@@ -21,8 +21,8 @@ public class AdversarialSearchAI implements IOthelloAI{
     private float confidence = 0.7f;
 
     // Heuristic names and weight specified
-    private String[] heuristicNames = {"parity", "mobility", "corners"};
-    private float[] heuristicWeights = {0.3f, 0.3f, 0.4f};
+    private String[] heuristicNames = {"parity", "mobility", "corners", "divergence"};
+    private float[] heuristicWeights = {0.3f, 0.1f, 0.3f, 0.3f};
 
     // HashMap for heuristic names and weights for ease of use
     private HashMap<String, Integer> weightMap = new HashMap<String, Integer>();
@@ -32,7 +32,7 @@ public class AdversarialSearchAI implements IOthelloAI{
     private int[] scaleHeuristics(float[] heuristicWeights){
 
         // Initialize weights
-        int[] scaledWeights = {0, 0, 0};
+        int[] scaledWeights = {0, 0, 0, 0};
         for (int i = 0; i < heuristicWeights.length; i++){
 
             // Weights multiplied by hardcoded utility and confidence in heuristics
@@ -234,11 +234,35 @@ public class AdversarialSearchAI implements IOthelloAI{
         }
     }
 
+    private int divergence(GameState state){
+        int[][] board = state.getBoard();
+        int length = board.length;
+        int shift = length/2;
+        int start = 0 - shift;
+        int end = shift;
+
+        int playerDivergence = 0;
+        int otherPlayerDivergence = 0;
+        for (int i = start; i < end; i++){
+            int x = i+shift;
+            for (int j = start; j < end; j++){
+                int y = j+shift;
+                if (board[x][y] == this.playerID){
+                    playerDivergence += i*i + j*j;
+                } else if (board[x][y] == this.otherPlayerID){
+                    otherPlayerDivergence += i*i + j*j;
+                }
+            }
+        }
+        return ( playerDivergence - otherPlayerDivergence ) / (playerDivergence + otherPlayerDivergence );
+    }
+
     private int evaluateBoard(int playerIndex, GameState state){
         int evaluation = 0;
         evaluation += this.weightMap.get("parity")*this.parity(state);
         evaluation += this.weightMap.get("mobility")*this.mobility(state);
         evaluation += this.weightMap.get("corners")*this.corners(state);
+        evaluation += this.weightMap.get("divergence")*this.divergence(state);
 
         return evaluation;
     }
