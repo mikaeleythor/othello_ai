@@ -18,11 +18,11 @@ public class AdversarialSearchAI implements IOthelloAI{
     private float maxUtil = 100f;
 
     // Heuristics are not perfect, utility of possible win is higher
-    private float confidence = 0.6f;
+    private float confidence = 0.7f;
 
     // Heuristic names and weight specified
-    private String[] heuristicNames = {"parity", "mobility"};
-    private float[] heuristicWeights = {0.5f, 0.5f};
+    private String[] heuristicNames = {"parity", "mobility", "corners"};
+    private float[] heuristicWeights = {0.3f, 0.3f, 0.4f};
 
     // HashMap for heuristic names and weights for ease of use
     private HashMap<String, Integer> weightMap = new HashMap<String, Integer>();
@@ -32,7 +32,7 @@ public class AdversarialSearchAI implements IOthelloAI{
     private int[] scaleHeuristics(float[] heuristicWeights){
 
         // Initialize weights
-        int[] scaledWeights = {0, 0};
+        int[] scaledWeights = {0, 0, 0};
         for (int i = 0; i < heuristicWeights.length; i++){
 
             // Weights multiplied by hardcoded utility and confidence in heuristics
@@ -190,24 +190,55 @@ public class AdversarialSearchAI implements IOthelloAI{
     // HEURISTICS
     
     // Should always return a value between -1 and 1
-    private int parity(int playerIndex, GameState state){
+
+    // Parity is the ratio of difference of tokens
+    // to the total number of tokens
+    private int parity(GameState state){
         int[] tokenArray = state.countTokens();
-        return (tokenArray[playerIndex] - tokenArray[playerIndex == 0 ? 1 : 0]) / (tokenArray[0] + tokenArray[1]);
+        return (tokenArray[this.playerIndex] - tokenArray[otherPlayerIndex]) / (tokenArray[0] + tokenArray[1]);
     }
 
-    private int mobility(int playerIndex, GameState state){
+    // Mobility is the ratio of diffence of legal moves
+    // to the total number of legalMoves
+    private int mobility(GameState state){
         ArrayList<Position> playerLegalMoves = state.legalMoves();
         state.changePlayer();
         ArrayList<Position> otherPlayerLegalMoves = state.legalMoves();
         state.changePlayer();
+        int mobility = (playerLegalMoves.size() - otherPlayerLegalMoves.size()) / (playerLegalMoves.size() + otherPlayerLegalMoves.size());
+        return state.getPlayerInTurn() == this.playerID ? mobility : -mobility;
+    }
 
-        return (playerLegalMoves.size() - otherPlayerLegalMoves.size()) / (playerLegalMoves.size() + otherPlayerLegalMoves.size());
+    // Corner capture is the ratio of difference of captured corners
+    // to the total number of corners
+    private int corners(GameState state){
+        int[][] board = state.getBoard();
+        int end = board.length;
+        
+        int playerCorners = 0;
+        int otherPlayerCorners = 0;
+        for (int i = 0; i < end; i++){
+            for (int j = 0; j < end; j++){
+                if ( board[i][j] == this.playerID ){
+                    playerCorners ++;
+                } else if ( board[i][j] == this.otherPlayerID ){
+                    otherPlayerCorners ++;
+                }
+            }
+        }
+        int capturedCorners = playerCorners + otherPlayerCorners;
+        if ( capturedCorners > 0 ){
+            return ( playerCorners - otherPlayerCorners ) / capturedCorners;
+        } else {
+            return 0;
+        }
     }
 
     private int evaluateBoard(int playerIndex, GameState state){
         int evaluation = 0;
-        evaluation += this.weightMap.get("parity")*this.parity(playerIndex, state);
-        evaluation += this.weightMap.get("mobility")*this.mobility(playerIndex, state);
+        evaluation += this.weightMap.get("parity")*this.parity(state);
+        evaluation += this.weightMap.get("mobility")*this.mobility(state);
+        evaluation += this.weightMap.get("corners")*this.corners(state);
 
         return evaluation;
     }
