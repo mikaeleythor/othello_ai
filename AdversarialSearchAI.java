@@ -213,15 +213,19 @@ public class AdversarialSearchAI implements IOthelloAI{
     // to the total number of corners
     private int corners(GameState state){
         int[][] board = state.getBoard();
-        int end = board.length;
         
         int playerCorners = 0;
         int otherPlayerCorners = 0;
-        for (int i = 0; i < end; i++){
-            for (int j = 0; j < end; j++){
-                if ( board[i][j] == this.playerID ){
+        
+        int[] indices = cornerIndices(state);
+
+        for (int i = 0; i < 2; i++){
+            int x = indices[i];
+            for (int j = 0; j < 2; j++){
+                int y = indices[j];
+                if ( board[x][y] == this.playerID ){
                     playerCorners ++;
-                } else if ( board[i][j] == this.otherPlayerID ){
+                } else if ( board[x][y] == this.otherPlayerID ){
                     otherPlayerCorners ++;
                 }
             }
@@ -231,6 +235,30 @@ public class AdversarialSearchAI implements IOthelloAI{
             return ( playerCorners - otherPlayerCorners ) / capturedCorners;
         } else {
             return 0;
+        }
+    }
+
+    private int[] cornerIndices(GameState state){
+        int[][] board = state.getBoard();
+        int end = board.length;
+        int[] indices = {0, end-1};
+        return indices;
+    }
+    
+    private int[] cornerNeighborIndices(GameState state){
+        int[] cornerIndices = this.cornerIndices(state);
+        int[] indices = {cornerIndices[0], cornerIndices[0]+1, cornerIndices[1]-1, cornerIndices[1]};
+        return indices;
+    }
+
+    private int cornerNeighbors(GameState state){
+        int[] indices = this.cornerNeighborIndices(state);        
+        int[] cornerIndices = this.cornerIndices(state);
+        int size = indices.length;
+        List<Integer> cornerList = new Arraylist<>(Arrays.asList(cornerIndices));
+        for (int i = 0; i < size; i++){
+            for (int j = 0; j < size; j++){
+            }
         }
     }
 
