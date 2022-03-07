@@ -12,7 +12,7 @@ public class AdversarialSearchAI implements IOthelloAI{
     private int otherPlayerIndex;
 
     // Max recursion depth
-    private int maxDepth = 10;
+    private int maxDepth = 40;
 
     // Main goal is winning not acquiring tokens, so winning-utility is hardcoded
     private float maxUtil = 100f;
@@ -22,7 +22,7 @@ public class AdversarialSearchAI implements IOthelloAI{
 
     // Heuristic names and weight specified
     private String[] heuristicNames = {"parity", "mobility", "corners", "divergence"};
-    private float[] heuristicWeights = {0.3f, 0.1f, 0.3f, 0.3f};
+    private float[] heuristicWeights = {0.3f, 0.4f, 0.3f, 0.0f};
 
     // HashMap for heuristic names and weights for ease of use
     private HashMap<String, Integer> weightMap = new HashMap<String, Integer>();
@@ -70,7 +70,7 @@ public class AdversarialSearchAI implements IOthelloAI{
         AlphaBeta extrema = new AlphaBeta();
 
         // Initilize depth object
-        Depth depth = new Depth(this.maxDepth, 0);
+        Depth depth = new Depth(100, 0);
 
         // Begin recursion
         Value value = this.maxValue(state, extrema, depth);
@@ -245,22 +245,22 @@ public class AdversarialSearchAI implements IOthelloAI{
         return indices;
     }
     
-    private int[] cornerNeighborIndices(GameState state){
-        int[] cornerIndices = this.cornerIndices(state);
-        int[] indices = {cornerIndices[0], cornerIndices[0]+1, cornerIndices[1]-1, cornerIndices[1]};
-        return indices;
-    }
+    //private int[] cornerNeighborIndices(GameState state){
+        //int[] cornerIndices = this.cornerIndices(state);
+        //int[] indices = {cornerIndices[0], cornerIndices[0]+1, cornerIndices[1]-1, cornerIndices[1]};
+        //return indices;
+    //}
 
-    private int cornerNeighbors(GameState state){
-        int[] indices = this.cornerNeighborIndices(state);        
-        int[] cornerIndices = this.cornerIndices(state);
-        int size = indices.length;
-        List<Integer> cornerList = new Arraylist<>(Arrays.asList(cornerIndices));
-        for (int i = 0; i < size; i++){
-            for (int j = 0; j < size; j++){
-            }
-        }
-    }
+    //private int cornerNeighbors(GameState state){
+        //int[] indices = this.cornerNeighborIndices(state);        
+        //int[] cornerIndices = this.cornerIndices(state);
+        //int size = indices.length;
+        //List<Integer> cornerList = new Arraylist<>(Arrays.asList(cornerIndices));
+        //for (int i = 0; i < size; i++){
+            //for (int j = 0; j < size; j++){
+            //}
+        //}
+    //}
 
     private int divergence(GameState state){
         int[][] board = state.getBoard();
