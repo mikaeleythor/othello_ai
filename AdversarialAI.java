@@ -1,4 +1,5 @@
 import java.util.*;
+import java.lang.*;
 
 
 public class AdversarialAI implements IOthelloAI{
@@ -12,17 +13,17 @@ public class AdversarialAI implements IOthelloAI{
     private int otherPlayerIndex;
 
     // Max recursion depth
-    private int maxDepth = 40;
+    private int maxDepth = 6;
 
     // Main goal is winning not acquiring tokens, so winning-utility is hardcoded
     private float maxUtil = 100f;
 
     // Heuristics are not perfect, utility of possible win is higher
-    private float confidence = 0.7f;
+    private float confidence = 1.0f;
 
     // Heuristic names and weight specified
-    private String[] heuristicNames = {"stableArea"};
-    private float[] heuristicWeights = {1.0f};
+    private String[] heuristicNames = {"mobility","corners","parity","stableArea"};
+    private float[] heuristicWeights = {.03f,.9f,.02f,.05f};
 
     // HashMap for heuristic names and weights for ease of use
     private HashMap<String, Integer> weightMap = new HashMap<String, Integer>();
@@ -70,10 +71,13 @@ public class AdversarialAI implements IOthelloAI{
         AlphaBeta extrema = new AlphaBeta();
 
         // Initilize depth object
-        Depth depth = new Depth(100, 0);
+        Depth depth = new Depth(maxDepth, 0);
+        System.out.println("Initializing new depth object with current: " + depth.getCurrent());
 
         // Begin recursion
         Value value = this.maxValue(state, extrema, depth);
+
+        System.out.println("Return final value: "+value.getUtility());
 
         // Return move
         return value.getMove();
@@ -89,14 +93,20 @@ public class AdversarialAI implements IOthelloAI{
             
             // Calculate utility based on player and state
             int utility = this.utilityValue(state);
+            //int evaluation = this.evaluateBoard(state);
             vMax.setUtility(utility);
+
+            System.out.println("No moves for max at depth: " + depth.getCurrent());
+            System.out.println("return evaluation: " + vMax.getUtility());
             return vMax;
 
         } else if ( depth.isMax() ){
 
             // Evaluate utility based on heuristics
-            int evaluation = this.evaluateBoard(this.playerIndex, state);
+            int evaluation = this.evaluateBoard(state);
             vMax.setUtility(evaluation);
+            System.out.println("Maximum depth reached at max: " + depth.getCurrent());
+            System.out.println("return evaluation: " + vMax.getUtility());
             return vMax;
 
 
@@ -129,7 +139,8 @@ public class AdversarialAI implements IOthelloAI{
                 }
 
                 // Beta cut
-                if (vMax.getUtility() >= extrema.getBeta()) {
+                if (vMax.getUtility() > extrema.getBeta()) {
+                    System.out.println("Beta cut");
                     return vMax;
                 }
            }
@@ -145,12 +156,17 @@ public class AdversarialAI implements IOthelloAI{
         // End condition
         if (state.legalMoves().isEmpty()) {
             int utility = this.utilityValue(state);
+            //int evaluation = this.evaluateBoard(state);
             vMin.setUtility(utility);
+            System.out.println("No moves for min at depth: " + depth.getCurrent());
+            System.out.println("return evaluation: " + vMin.getUtility());
             return vMin;
 
         } else if ( depth.isMax() ){
-            int evaluation = this.evaluateBoard(this.otherPlayerIndex, state);
+            int evaluation = this.evaluateBoard(state);
             vMin.setUtility(evaluation);
+            System.out.println("Maximum depth reached at min: " + depth.getCurrent());
+            System.out.println("return evaluation: " + vMin.getUtility());
             return vMin;
 
 
@@ -178,7 +194,8 @@ public class AdversarialAI implements IOthelloAI{
                     vMin.setMove(action);
                     extrema.setBeta(minimum(new int[] {extrema.getBeta(), vMin.getUtility()}));
                 }
-                if (vMin.getUtility() <= extrema.getAlpha()) {
+                if (vMin.getUtility() < extrema.getAlpha()) {
+                    System.out.println("Alpha cut");
                     return vMin;
                 }
             }
@@ -222,46 +239,143 @@ public class AdversarialAI implements IOthelloAI{
             int next = rowRecursionIncrement(board, ref, depth+1, playerID);
             if (next > 0){
                 return 1 + next;
+            } else if (next == 0){
+                return 0;
             }
         } 
         System.out.println("Unexpected option in rowRecursionIncrement");
+        System.out.println("Board recursion depth: " + depth);
         return 0;
     }
 
 
     private int stableArea(GameState state){
+        
         // Initialize parameters
         int[][] board = state.getBoard();
         int size = board.length;
-        int[][] revBoard = new int[size][size];
+
+        int[][] board90 = new int[size][size]; 
+        int[][] board180 = new int[size][size];
+        int[][] board270 = new int[size][size];
+
+        int area = 0;
+        int area90 = 0;
+        int area180 = 0;
+        int area270 = 0;
+
+
         for (int i = 0; i < size; i++){
             for (int j = 0; j < size; j++){
-                revBoard[i][j] = board[size-i-1][size-j-1];
+                board90[i][j] = board[size-j-1][i];
+                board180[i][j] = board[size-i-1][size-j-1];
+                board270[i][j] = board[j][size-i-1];
             }
         }
 
-        int ref = 0;
         int depth = 0;
-        int start = board[0][0]; // PlayerID
 
         // Find the reference value
-        while (board[0][ref+1] == start && ref+1 < size) {ref++;}
-        int area = rowRecursionDecrement(board, ref, depth+1, start);
+        int start = board[0][0]; // PlayerID
+        int ref = 0;
 
-        start = revBoard[0][0];
-        while (revBoard[0][ref+1] == start && ref+1 < size) {ref++;}
-        int revArea = rowRecursionDecrement(board, ref, depth+1, start);
+        if (start != 0){
+            while ( ref+1 < size && board[0][ref+1] == start ) {ref++;}
+            area = rowRecursionDecrement(board, ref, depth+1, start)*(start == this.playerID? 1 : -1);
+        }
 
+        ref = 0;
+        start = board90[0][0];
+        if (start != 0){
+            while ( ref+1 < size && board90[0][ref+1] == start ) {ref++;}
+            area90 = rowRecursionDecrement(board90, ref, depth+1, start)*(start == this.playerID? 1 : -1);
+        }
 
-        return area + revArea;
+        ref = 0;
+        start = board180[0][0];
+        if (start != 0){
+            while ( ref+1 < size && board180[0][ref+1] == start ) {ref++;}
+            area180 = rowRecursionDecrement(board180, ref, depth+1, start)*(start == this.playerID? 1 : -1);
+        }
+
+        ref = 0;
+        start = board270[0][0];
+        if (start != 0){
+            while ( ref+1 < size && board270[0][ref+1] == start ) {ref++;}
+            area270 = rowRecursionDecrement(board270, ref, depth+1, start)*(start == this.playerID? 1 : -1);
+        }
+
+        int absTotal = Math.abs(area) + Math.abs(area90) + Math.abs(area180) + Math.abs(area270);
+        int total = area + area90 + area180 + area270;
+
+        if (absTotal != 0){
+            System.out.println("predicted net area: " + total);
+            System.out.println("predicted total area: " + absTotal);
+
+            return total/absTotal;
+        }
+        return 0;
 
     }
 
+    private int corners(GameState state){
+        int[][] board = state.getBoard();
+        
+        int playerCorners = 0;
+        int otherPlayerCorners = 0;
+        
+        int[] indices = cornerIndices(state);
 
-    private int evaluateBoard(int playerIndex, GameState state){
+        for (int i = 0; i < 2; i++){
+            int x = indices[i];
+            for (int j = 0; j < 2; j++){
+                int y = indices[j];
+                if ( board[x][y] == this.playerID ){
+                    playerCorners ++;
+                } else if ( board[x][y] == this.otherPlayerID ){
+                    otherPlayerCorners ++;
+                }
+            }
+        }
+        int capturedCorners = playerCorners + otherPlayerCorners;
+        if ( capturedCorners > 0 ){
+            return ( playerCorners - otherPlayerCorners ) / capturedCorners;
+        } else {
+            return 0;
+        }
+    }
+
+    private int[] cornerIndices(GameState state){
+        int[][] board = state.getBoard();
+        int end = board.length;
+        int[] indices = {0, end-1};
+        return indices;
+    }
+
+    // Parity is the ratio of difference of tokens
+    // to the total number of tokens
+    private int parity(GameState state){
+        int[] tokenArray = state.countTokens();
+        return (tokenArray[this.playerIndex] - tokenArray[otherPlayerIndex]) / (tokenArray[0] + tokenArray[1]);
+    }
+
+    // Mobility is the ratio of diffence of legal moves
+    // to the total number of legalMoves
+    private int mobility(GameState state){
+        ArrayList<Position> playerLegalMoves = state.legalMoves();
+        state.changePlayer();
+        ArrayList<Position> otherPlayerLegalMoves = state.legalMoves();
+        state.changePlayer();
+        int mobility = (playerLegalMoves.size() - otherPlayerLegalMoves.size()) / (playerLegalMoves.size() + otherPlayerLegalMoves.size());
+        return state.getPlayerInTurn() == this.playerID ? mobility : -mobility;
+    }
+
+    private int evaluateBoard(GameState state){
         int evaluation = 0;
+        evaluation += this.weightMap.get("parity")*this.parity(state);
+        //evaluation += this.weightMap.get("mobility")*this.mobility(state);
+        evaluation += this.weightMap.get("corners")*this.corners(state);
         evaluation += this.weightMap.get("stableArea")*this.stableArea(state);
-
         return evaluation;
     }
 
@@ -274,7 +388,7 @@ public class AdversarialAI implements IOthelloAI{
                 return (int) -this.maxUtil;
             }
         } else {
-            return this.evaluateBoard(state.getPlayerInTurn() - 1, state);
+            return this.evaluateBoard(state);
         }
     }
 
