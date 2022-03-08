@@ -1,7 +1,7 @@
 import java.util.*;
 
 
-public class AdversarialSearchAI implements IOthelloAI{
+public class AdversarialAI implements IOthelloAI{
     
     // Player id is either 1 or 2
     private int playerID;
@@ -193,169 +193,73 @@ public class AdversarialSearchAI implements IOthelloAI{
 
     // Parity is the ratio of difference of tokens
     // to the total number of tokens
-    private int parity(GameState state){
-        int[] tokenArray = state.countTokens();
-        return (tokenArray[this.playerIndex] - tokenArray[otherPlayerIndex]) / (tokenArray[0] + tokenArray[1]);
-    }
 
-    // Mobility is the ratio of diffence of legal moves
-    // to the total number of legalMoves
-    private int mobility(GameState state){
-        ArrayList<Position> playerLegalMoves = state.legalMoves();
-        state.changePlayer();
-        ArrayList<Position> otherPlayerLegalMoves = state.legalMoves();
-        state.changePlayer();
-        int mobility = (playerLegalMoves.size() - otherPlayerLegalMoves.size()) / (playerLegalMoves.size() + otherPlayerLegalMoves.size());
-        return state.getPlayerInTurn() == this.playerID ? mobility : -mobility;
-    }
-
-    // Corner capture is the ratio of difference of captured corners
-    // to the total number of corners
-    private int corners(GameState state){
-        int[][] board = state.getBoard();
-        
-        int playerCorners = 0;
-        int otherPlayerCorners = 0;
-        
-        int[] indices = cornerIndices(state);
-
-        for (int i = 0; i < 2; i++){
-            int x = indices[i];
-            for (int j = 0; j < 2; j++){
-                int y = indices[j];
-                if ( board[x][y] == this.playerID ){
-                    playerCorners ++;
-                } else if ( board[x][y] == this.otherPlayerID ){
-                    otherPlayerCorners ++;
-                }
+    private int rowRecursionDecrement(int[][] board, int ref, int depth, int playerID){
+        int cell = 0;
+        while (cell < ref){
+            if (board[depth][cell] != playerID){
+                return 0;
             }
+            cell++;
         }
-        int capturedCorners = playerCorners + otherPlayerCorners;
-        if ( capturedCorners > 0 ){
-            return ( playerCorners - otherPlayerCorners ) / capturedCorners;
+        if (depth == board.length-1){
+            int adjacent = board.length - cell - 1;
+            return board.length * board.length - adjacent*adjacent/2;
+        } else if (cell > 0){
+            return rowRecursionDecrement(board, cell-1, depth+1, playerID) + rowRecursionIncrement(board, cell, depth+1, playerID);
         } else {
+            return ( (depth+1) * (depth+1) ) / 2;
+        }
+    }
+
+    private int rowRecursionIncrement(int[][] board, int ref, int depth, int playerID){
+        if (depth == board.length-1){
+            return 1;
+        }
+        if (board[depth][ref] != playerID){
             return 0;
-        }
-    }
-
-    private int[] cornerIndices(GameState state){
-        int[][] board = state.getBoard();
-        int end = board.length;
-        int[] indices = {0, end-1};
-        return indices;
-    }
-    
-    //private int[] cornerNeighborIndices(GameState state){
-        //int[] cornerIndices = this.cornerIndices(state);
-        //int[] indices = {cornerIndices[0], cornerIndices[0]+1, cornerIndices[1]-1, cornerIndices[1]};
-        //return indices;
-    //}
-
-    //private int cornerNeighbors(GameState state){
-        //int[] indices = this.cornerNeighborIndices(state);        
-        //int[] cornerIndices = this.cornerIndices(state);
-        //int size = indices.length;
-        //List<Integer> cornerList = new Arraylist<>(Arrays.asList(cornerIndices));
-        //for (int i = 0; i < size; i++){
-            //for (int j = 0; j < size; j++){
-            //}
-        //}
-    //}
-
-    private int divergence(GameState state){
-        int[][] board = state.getBoard();
-        int length = board.length;
-        int shift = length/2;
-        int start = 0 - shift;
-        int end = shift;
-
-        int playerDivergence = 0;
-        int otherPlayerDivergence = 0;
-        for (int i = start; i < end; i++){
-            int x = i+shift;
-            for (int j = start; j < end; j++){
-                int y = j+shift;
-                if (board[x][y] == this.playerID){
-                    playerDivergence += i*i + j*j;
-                } else if (board[x][y] == this.otherPlayerID){
-                    otherPlayerDivergence += i*i + j*j;
-                }
+        } else if (board[depth][ref] == playerID){
+            int next = rowRecursionIncrement(board, ref, depth+1, playerID);
+            if (next > 0){
+                return 1 + next;
             }
-        }
-        return ( playerDivergence - otherPlayerDivergence ) / (playerDivergence + otherPlayerDivergence );
-    }
-
-    private int stableArea(GameState state){
-
-        int[][] board = state.getBoard();
-        int size = board.length;
-
-        // First case
-        // Set reference value
-        int start1 = board[0][0];
-
-        // Depth and Cell variables increment positively
-        BoardDirs c1 = new BoardDirs(size, 1);
-        BoardDirs d1 = new BoardDirs(size, 1);
-
-        IncDirs incs = new IncDirs();
-        
-        int counter = 0;
-        while (board[d1.getIncrement()][c1.getNextIncrement()] == start1){
-            counter++;
-            if (counter == size){
-                // Here we have a full captured row
-                break;
-            }
-        }
-        int area1 = 0;
-
-        // Index of last areal token
-        int ref1 = c1.get();
-
-        if (ref1 > 0){
-            c1.resetFocus();
-            d1.increment();
-
-            area1 = checkDirs(start1, ref1, c1, d1, incs, board);
-        }
-
-        return area1;
-    }
-
-    private int checkDirs(int player, int ref, BoardDirs cellObject, BoardDirs depthObject, IncDirs incrementalDirections, int[][] board){
-
-        // Incrementally check incrementalDirections
-        while (!incrementalDirections.noDirs()){
-            int targetIndex = ref+depthObject.get()*incrementalDirections.getDir();
-            if (board[depthObject.get()][targetIndex] != player){
-                incrementalDirections.popDir();
-            } else if (board[depthObject.get()][targetIndex] == player){
-                int area = checkRow(player, ref, cellObject, depthObject, incrementalDirections, board);
-                return area;
-            }
-        }        
+        } 
+        System.out.println("Unexpected option in rowRecursionIncrement");
         return 0;
     }
 
-    private int checkRow(int player, int ref, BoardDirs cellObject, BoardDirs depthObject, IncDirs incrementalDirections, int[][] board){
-        while (cellObject.get() <= ref+depthObject.get()*incrementalDirections.getDir()){
-            if (board[depthObject.get()][cellObject.getIncrement()] != player){
-                return 0;
+
+    private int stableArea(GameState state){
+        // Initialize parameters
+        int[][] board = state.getBoard();
+        int size = board.length;
+        int[][] revBoard = new int[size][size];
+        for (int i = 0; i < size; i++){
+            for (int j = 0; j < size; j++){
+                revBoard[i][j] = board[size-i-1][size-j-1];
             }
         }
-        depthObject.increment();
-        cellObject.resetFocus();
-        int area = checkRow(player, ref, cellObject, depthObject, incrementalDirections, board);
-        return area;
+
+        int ref = 0;
+        int depth = 0;
+        int start = board[0][0]; // PlayerID
+
+        // Find the reference value
+        while (board[0][ref+1] == start && ref+1 < size) {ref++;}
+        int area = rowRecursionDecrement(board, ref, depth+1, start);
+
+        start = revBoard[0][0];
+        while (revBoard[0][ref+1] == start && ref+1 < size) {ref++;}
+        int revArea = rowRecursionDecrement(board, ref, depth+1, start);
+
+
+        return area + revArea;
+
     }
+
 
     private int evaluateBoard(int playerIndex, GameState state){
         int evaluation = 0;
-        //evaluation += this.weightMap.get("parity")*this.parity(state);
-        //evaluation += this.weightMap.get("mobility")*this.mobility(state);
-        //evaluation += this.weightMap.get("corners")*this.corners(state);
-        //evaluation += this.weightMap.get("divergence")*this.divergence(state);
         evaluation += this.weightMap.get("stableArea")*this.stableArea(state);
 
         return evaluation;
