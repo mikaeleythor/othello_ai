@@ -13,17 +13,17 @@ public class AdversarialAI implements IOthelloAI{
     private int otherPlayerIndex;
 
     // Max recursion depth
-    private int maxDepth = 6;
+    private int maxDepth = 8;
 
     // Main goal is winning not acquiring tokens, so winning-utility is hardcoded
-    private float maxUtil = 100f;
+    private float maxUtil = 50f;
 
     // Heuristics are not perfect, utility of possible win is higher
     private float confidence = 1.0f;
 
     // Heuristic names and weight specified
-    private String[] heuristicNames = {"mobility","corners","parity","stableArea"};
-    private float[] heuristicWeights = {.03f,.9f,.02f,.05f};
+    private String[] heuristicNames = {"cornerNeighbors","mobility","corners","parity","stableArea"};
+    private float[] heuristicWeights = {.661f,.000331f,.331f,.000661f,.0073f};
 
     // HashMap for heuristic names and weights for ease of use
     private HashMap<String, Integer> weightMap = new HashMap<String, Integer>();
@@ -71,13 +71,15 @@ public class AdversarialAI implements IOthelloAI{
         AlphaBeta extrema = new AlphaBeta();
 
         // Initilize depth object
-        Depth depth = new Depth(maxDepth, 0);
+        Depth depth = new Depth(this.maxDepth, 0);
         System.out.println("Initializing new depth object with current: " + depth.getCurrent());
 
         // Begin recursion
         Value value = this.maxValue(state, extrema, depth);
 
+        System.out.println("---------------------------------------");
         System.out.println("Return final value: "+value.getUtility());
+        System.out.println("---------------------------------------");
 
         // Return move
         return value.getMove();
@@ -92,12 +94,11 @@ public class AdversarialAI implements IOthelloAI{
         if (state.legalMoves().isEmpty()) {
             
             // Calculate utility based on player and state
-            int utility = this.utilityValue(state);
-            //int evaluation = this.evaluateBoard(state);
+            //int utility = this.utilityValue(state);
+            int utility = this.evaluateBoard(state);
             vMax.setUtility(utility);
 
             System.out.println("No moves for max at depth: " + depth.getCurrent());
-            System.out.println("return evaluation: " + vMax.getUtility());
             return vMax;
 
         } else if ( depth.isMax() ){
@@ -139,7 +140,7 @@ public class AdversarialAI implements IOthelloAI{
                 }
 
                 // Beta cut
-                if (vMax.getUtility() > extrema.getBeta()) {
+                if (vMax.getUtility() > extrema.getBeta() && vMax.getUtility() > 0){
                     System.out.println("Beta cut");
                     return vMax;
                 }
@@ -155,8 +156,8 @@ public class AdversarialAI implements IOthelloAI{
         
         // End condition
         if (state.legalMoves().isEmpty()) {
-            int utility = this.utilityValue(state);
-            //int evaluation = this.evaluateBoard(state);
+            //int utility = this.utilityValue(state);
+            int utility = this.evaluateBoard(state);
             vMin.setUtility(utility);
             System.out.println("No moves for min at depth: " + depth.getCurrent());
             System.out.println("return evaluation: " + vMin.getUtility());
@@ -194,7 +195,7 @@ public class AdversarialAI implements IOthelloAI{
                     vMin.setMove(action);
                     extrema.setBeta(minimum(new int[] {extrema.getBeta(), vMin.getUtility()}));
                 }
-                if (vMin.getUtility() < extrema.getAlpha()) {
+                if (vMin.getUtility() < extrema.getAlpha() && vMin.getUtility() < 0) {
                     System.out.println("Alpha cut");
                     return vMin;
                 }
@@ -345,6 +346,54 @@ public class AdversarialAI implements IOthelloAI{
         }
     }
 
+    private int cornerNeighbors(GameState state){
+        int[][] board = state.getBoard();
+        int playerCornerNeighbors = 0;
+        int otherPlayerCornerNeighbors = 0;
+        
+        int[] indices = cornerIndices(state);
+
+        for (int i = 0; i < 2; i++){
+            int x = indices[i];
+            for (int j = 0; j < 2; j++){
+                int y = indices[j];
+                if (board[x][y] == 0){
+                    playerCornerNeighbors += this.countCornerNeighbors(x,y,board,this.playerID);
+                    otherPlayerCornerNeighbors += this.countCornerNeighbors(x,y,board,this.otherPlayerID);
+                } else if (board[x][y] == this.playerID){
+                    otherPlayerCornerNeighbors += this.countCornerNeighbors(x,y,board,this.otherPlayerID);
+                } else if (board[x][y] == this.otherPlayerID){
+                    playerCornerNeighbors += this.countCornerNeighbors(x,y,board,this.playerID);
+                }
+            }
+        }
+        int total = playerCornerNeighbors + otherPlayerCornerNeighbors;
+        if (total > 0){
+            // Important to return a negative here
+            return (otherPlayerCornerNeighbors - playerCornerNeighbors )/total;
+        }
+        return 0;
+    }
+
+    private int countCornerNeighbors(int x,int y,int[][] board,int player){
+
+        int playerCornerNeighbor = 0;
+
+        int xx = x == 0 ? 1 : board.length-2;
+        int yy = y == 0 ? 1 : board.length-2;
+
+        int[] xIndices = {x, xx, xx};
+        int[] yIndices = {yy, y, yy};
+
+        for (int i = 0; i < 3; i++){
+            if (board[xIndices[i]][yIndices[i]] == player){
+                playerCornerNeighbor++;
+            }
+        }
+        return playerCornerNeighbor;
+    }
+        
+
     private int[] cornerIndices(GameState state){
         int[][] board = state.getBoard();
         int end = board.length;
@@ -373,6 +422,7 @@ public class AdversarialAI implements IOthelloAI{
     private int evaluateBoard(GameState state){
         int evaluation = 0;
         evaluation += this.weightMap.get("parity")*this.parity(state);
+        evaluation += this.weightMap.get("cornerNeighbors")*this.cornerNeighbors(state);
         //evaluation += this.weightMap.get("mobility")*this.mobility(state);
         evaluation += this.weightMap.get("corners")*this.corners(state);
         evaluation += this.weightMap.get("stableArea")*this.stableArea(state);
@@ -383,8 +433,10 @@ public class AdversarialAI implements IOthelloAI{
         if ( state.isFinished() ){
             int[] tokens = state.countTokens();
             if ( tokens[this.playerIndex] > tokens[this.otherPlayerIndex] ){
+                System.out.println("Win! Returing maxUtil: "+this.maxUtil);
                 return (int) this.maxUtil;
             } else {
+                System.out.println("Defeat! Returing minUtil: "+(-this.maxUtil));
                 return (int) -this.maxUtil;
             }
         } else {
