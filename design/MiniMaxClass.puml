@@ -1,0 +1,25 @@
+@startuml
+
+title MinimaxAI
+
+hide empty methods
+hide empty fields
+
+package IOthelloAI{
+    class MiniMaxAI{
+        playeriD: int
+        otherplayerID: int
+        decideMove()
+        miniMaxSearch()
+        maxValue()
+        minValue()
+    }
+
+    class Value{
+        utility: int
+        move: position
+        get()
+        set()
+    }
+}
+@enduml
