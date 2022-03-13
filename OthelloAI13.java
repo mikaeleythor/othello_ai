@@ -1,15 +1,17 @@
 public class OthelloAI13 implements IOthelloAI {
 
-    /** Thanks to https://kartikkukreja.wordpress.com/2013/03/30/heuristic-function-for-reversiothello/#more-33 */
+    /**
+     * Thanks to
+     * https://kartikkukreja.wordpress.com/2013/03/30/heuristic-function-for-reversiothello/#more-33
+     */
     private int player;
     private LookUpTable weightedTable;
     private int depth = 0;
+    private int maxDepth = 9;
     int opponentPlayer;
 
     @Override
     public Position decideMove(GameState state) {
-        System.out.println("DECIDE MOVE - START!\n" + printBoard(state) + "\n\n");
-
         weightedTable = new LookUpTable(state.getBoard().length);
         depth = 0; // count from 0
 
@@ -18,15 +20,11 @@ public class OthelloAI13 implements IOthelloAI {
 
         Value value = maxValue(state, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
 
-        System.out.println("DECIDE MOVE - END!\n" + value.toString() + "\n" +
-                printBoard(state) + "\n\n");
         return value.getMove();
     }
 
     private Value maxValue(GameState state, double alpha, double beta) {
         depth++;
-        // System.out.println("MAX VALUE - START: Legal moves: " + state.legalMoves() +
-        // ", DEPTH: " + depth + "\n");
 
         if (cutOff(state)) {
             depth--;
@@ -65,18 +63,13 @@ public class OthelloAI13 implements IOthelloAI {
             }
         }
 
-        // System.out.println("MAX VALUE - END: " + resultValue + ", DEPTH: " + depth--
-        // + ", LEGAL MOVES: "
-        // + state.legalMoves() + ", PLAYER: " + state.getPlayerInTurn() + "\n\n");
-        // state.removeToken(currentPath.pop());
         depth--;
         return resultValue;
     }
 
     private Value minValue(GameState state, double alpha, double beta) {
         depth++;
-        // System.out.println("MIN VALUE - START: Legal moves: " + state.legalMoves() +
-        // ", DEPTH: " + depth + "\n");
+
         if (cutOff(state)) {
             depth--;
             return new Value(eval(state), null);
@@ -111,10 +104,7 @@ public class OthelloAI13 implements IOthelloAI {
                 resultValue.setMove(null); // no move is set!
             }
         }
-        // System.out.println("MIN VALUE - END: " + resultValue + ", DEPTH: " + depth--
-        // + ", LEGAL MOVES: "
-        // + state.legalMoves() + ", PLAYER: " + state.getPlayerInTurn() + "\n\n");
-        // state.removeToken(currentPath.pop());
+
         depth--;
         return resultValue;
     }
@@ -163,18 +153,16 @@ public class OthelloAI13 implements IOthelloAI {
         int mobility = mobility(state);
         int frontierDisks = frontierDisks(state);
         int lookUpTablePoints = points(state)[player - 1] - points(state)[opponentPlayer - 1];
-        
-        
-	    return (int)((1 * pieceDifference) + (80.1724 * cornerOccupancy) + (38.2026 * cornerCloseness) + (7.8922 * mobility) + (7.4396 * frontierDisks) + (1.0 * lookUpTablePoints)); //is taken from https://kartikkukreja.wordpress.com/2013/03/30/heuristic-function-for-reversiothello/#more-33
-        //return points(state)[player - 1] - points(state)[opponentPlayer - 1];
+
+        return (int) ((1 * pieceDifference) + (80.1724 * cornerOccupancy) + (38.2026 * cornerCloseness)
+                + (7.8922 * mobility) + (7.4396 * frontierDisks) + (1.0 * lookUpTablePoints)); // is taken from
+                                                                                               // https://kartikkukreja.wordpress.com/2013/03/30/heuristic-function-for-reversiothello/#more-33
     }
 
     private boolean cutOff(GameState state) {
         // return false;
-        return depth == 8 || state.isFinished(); // this can be changed!
+        return depth >= this.maxDepth || state.isFinished();
     }
-
-    // ----------------------------------------------------------------------------------------
 
     // HEURISTIC FUNCTIONS:
     /**
@@ -187,28 +175,13 @@ public class OthelloAI13 implements IOthelloAI {
         state.changePlayer();
         int maxLegalMoves = state.legalMoves().size();
         if (minLegalMoves + maxLegalMoves != 0)
-            return (100 * (maxLegalMoves - minLegalMoves)) / (maxLegalMoves + minLegalMoves); //is taken from https://kartikkukreja.wordpress.com/2013/03/30/heuristic-function-for-reversiothello/#more-33
+            return (100 * (maxLegalMoves - minLegalMoves)) / (maxLegalMoves + minLegalMoves); // is taken from
+                                                                                              // https://kartikkukreja.wordpress.com/2013/03/30/heuristic-function-for-reversiothello/#more-33
         else
             return 0;
     }
 
-    /**
-     * 
-     * @param state
-     * @return the difference in coins between the max and min player
-     */
-    private int differenceCoins(GameState state) { // d: difference coins
-        int maxPlayerCoin = state.countTokens()[player - 1];
-        int minPlayerCoin = state.countTokens()[opponentPlayer - 1];
-
-        return 100 * (maxPlayerCoin - minPlayerCoin) / (maxPlayerCoin + minPlayerCoin);
-    }
-
-    private int potentialMobility(GameState state) {
-        return 0; // TODO!!!
-    }
-
-    private float cornerCloseness(GameState state) { // l: corner closesness
+    private float cornerCloseness(GameState state) { // l: corner closeness
         int playerCC = 0;
         int opponentCC = 0;
 
@@ -223,7 +196,8 @@ public class OthelloAI13 implements IOthelloAI {
                 }
             }
         }
-        return -12.5f * (playerCC - opponentCC); //-12.5 is taken from https://kartikkukreja.wordpress.com/2013/03/30/heuristic-function-for-reversiothello/#more-33
+        return -12.5f * (playerCC - opponentCC); // -12.5 is taken from
+                                                 // https://kartikkukreja.wordpress.com/2013/03/30/heuristic-function-for-reversiothello/#more-33
     }
 
     private int cornerOccupancy(GameState state) { // c: corner occupancy
@@ -238,10 +212,14 @@ public class OthelloAI13 implements IOthelloAI {
                 opponentCO++;
             }
         }
-        return 25 * (playerCO - opponentCO); //25 is taken from https://kartikkukreja.wordpress.com/2013/03/30/heuristic-function-for-reversiothello/#more-33
+        return 25 * (playerCO - opponentCO); // 25 is taken from
+                                             // https://kartikkukreja.wordpress.com/2013/03/30/heuristic-function-for-reversiothello/#more-33
     }
 
-    /** returns the difference between the frontier disks (the disks that have an empty positions besides) */
+    /**
+     * returns the difference between the frontier disks (the disks that have an
+     * empty position besides)
+     */
     private int frontierDisks(GameState state) { // f
         int[][] board = state.getBoard();
 
@@ -250,13 +228,17 @@ public class OthelloAI13 implements IOthelloAI {
 
         for (int col = 0; col < board.length; col++) {
             for (int row = 0; row < board.length; row++) {
-                if (board[col][row] == player && hasOneEmptyPositionAround(state, new Position(col, row))) playerFD++;
-                else if (board[col][row] == opponentPlayer && hasOneEmptyPositionAround(state, new Position(col, row))) opponentFD++;
-            } 
+                if (board[col][row] == player && hasOneEmptyPositionAround(state, new Position(col, row)))
+                    playerFD++;
+                else if (board[col][row] == opponentPlayer && hasOneEmptyPositionAround(state, new Position(col, row)))
+                    opponentFD++;
+            }
         }
 
-        if (playerFD + opponentFD != 0) return 100 * (opponentFD-playerFD) / (playerFD + opponentFD);
-        else return 0;
+        if (playerFD + opponentFD != 0)
+            return 100 * (opponentFD - playerFD) / (playerFD + opponentFD);
+        else
+            return 0;
     }
 
     // GET SQUARES ON SPECIFIC PLACES:
@@ -266,23 +248,6 @@ public class OthelloAI13 implements IOthelloAI {
         Position[] corners = new Position[] { new Position(0, 0), new Position(0, size - 1), new Position(size - 1, 0),
                 new Position(size - 1, size - 1) };
         return corners;
-    }
-
-    private int cornersCaptured(GameState state) {
-        int maxCorners = 0;
-        int minCorners = 0;
-
-        for (Position corner : getCorners(state)) {
-            if (state.getBoard()[corner.col][corner.row] == player)
-                maxCorners++;
-            else if (state.getBoard()[corner.col][corner.row] == opponentPlayer)
-                minCorners++;
-        }
-
-        if (maxCorners + minCorners != 0)
-            return (100 * (maxCorners - minCorners) / (maxCorners + minCorners));
-        else
-            return 0;
     }
 
     private Position[] getAroundCornerPositions(GameState state, Position corner) {
@@ -309,25 +274,10 @@ public class OthelloAI13 implements IOthelloAI {
         return null;
     }
 
-    private Position[] getXSquares(GameState state) {
-        int size = state.getBoard().length;
-        return new Position[] { new Position(1, 1), new Position(1, size - 2), new Position(size - 2, 1),
-                new Position(size - 2, size - 2) };
-    }
-
-    private Position[] getCSquares(GameState state) {
-        int size = state.getBoard().length;
-        return new Position[] {
-                new Position(0, 1), new Position(1, 0),
-                new Position(0, size - 2), new Position(1, size - 1),
-                new Position(size - 2, 0), new Position(size - 1, 1),
-                new Position(size - 2, size - 1), new Position(size - 1, size - 2)
-        };
-    }
-
-    /** returns true if there is an empty position around a position  */
+    /** returns true if there is an empty position around a position */
     private boolean hasOneEmptyPositionAround(GameState state, Position position) {
-        int X1[] = { -1, -1, 0, 1, 1, 1, 0, -1 }; //is taken from https://kartikkukreja.wordpress.com/2013/03/30/heuristic-function-for-reversiothello/#more-33
+        int X1[] = { -1, -1, 0, 1, 1, 1, 0, -1 }; // is taken from
+                                                  // https://kartikkukreja.wordpress.com/2013/03/30/heuristic-function-for-reversiothello/#more-33
         int Y1[] = { 0, 1, 1, 1, 0, -1, -1, -1 };
 
         int col = position.col;
@@ -336,7 +286,7 @@ public class OthelloAI13 implements IOthelloAI {
         int[][] board = state.getBoard();
 
         for (int i = 0; i < Y1.length; i++) {
-            int x = col+ X1[i];
+            int x = col + X1[i];
             int y = row + Y1[i];
 
             boolean xIsOnTheBoard = 0 <= x && x < board.length;
@@ -348,7 +298,6 @@ public class OthelloAI13 implements IOthelloAI {
                 }
             }
         }
-        return false;        
+        return false;
     }
-
 }
